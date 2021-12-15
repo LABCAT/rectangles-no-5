@@ -71,14 +71,31 @@ const P5SketchWithAudio = () => {
             p.canvas = p.createCanvas(p.canvasWidth, p.canvasHeight);
             p.background(0);
 
-            p.rectMode(p.CENTER);
+            // p.rectMode(p.CENTER);
             p.colorMode(p.HSB, 1);
             
             p.nbCellW = Math.floor(p.width / p.cellW);
             p.nbCellH = Math.floor(p.height / p.cellH);
             
-            for (var i = 0; i <  p.nbCellW * p.nbCellH; i ++) {
-                p.cells.push(p.createVector(0, 0));
+            // for (var i = 0; i <  p.nbCellW * p.nbCellH; i ++) {
+            //     p.cells.push(p.createVector(0, 0));
+            // }
+
+            for (var i = 0; i < p.nbCellW; i ++) {
+                for (var j = 0; j < p.nbCellH; j ++) {
+                    const x =  p.cellW * i,
+                        y =  p.cellH * j,
+                        key = x + '-' + y;
+                    p.cells.push(
+                        {
+                            key: key,
+                            x: x,
+                            y: y,
+                            hue: 0,
+                            brightness: 0,
+                        }
+                    );
+                }
             }
         }
 
@@ -87,29 +104,34 @@ const P5SketchWithAudio = () => {
 
             }
 
-            var deltaMouse = p.createVector(p.mouseX - p.pmouseX, p.mouseY - p.pmouseY);
+            // var deltaMouse = p.createVector(p.mouseX - p.pmouseX, p.mouseY - p.pmouseY);
             
-            for (var i = 0; i < p.nbCellW; i ++) {
-                for (var j = 0; j < p.nbCellH; j ++) {
-                    var k = i + j * p.nbCellW;
-                    var x =  p.cellW * i + p.cellW/2;
-                    var y =  p.cellH * j + p.cellH/2;
-                    var d = Math.max(1, p.dist(p.mouseX, p.mouseY, x, y));
+            // for (var i = 0; i < p.nbCellW; i ++) {
+            //     for (var j = 0; j < p.nbCellH; j ++) {
+            //         var k = i + j * p.nbCellW;
+            //         var x =  p.cellW * i + p.cellW/2;
+            //         var y =  p.cellH * j + p.cellH/2;
+            //         var d = Math.max(1, p.dist(p.mouseX, p.mouseY, x, y));
                     
-                    deltaMouse.normalize();
-                    deltaMouse.mult(1/(d*30));
-                    p.cells[k].add(deltaMouse);
-                    p.cells[k].limit(10);
+            //         deltaMouse.normalize();
+            //         deltaMouse.mult(1/(d*30));
+            //         p.cells[k].add(deltaMouse);
+            //         p.cells[k].limit(10);
                     
-                    var h = p.map(p.cells[k].heading(), -p.PI, p.PI, 0, 1);
-                    var b = p.min(p.cells[k].mag()*100, 10);
-                    p.fill(h, 1, b);
+            //         var h = p.map(p.cells[k].heading(), -p.PI, p.PI, 0, 1);
+            //         var b = p.min(p.cells[k].mag()*100, 10);
+            //         p.fill(h, 1, b);
                     
-                    p.rect(x, y, p.cellW, p.cellH);
+            //         p.rect(x, y, p.cellW, p.cellH);
                     
-                    p.cells[k].mult(.98);
-                }
-            }
+            //         p.cells[k].mult(.98);
+            //     }
+            // }
+            p.cells.forEach(cell => {
+                const { x, y, hue, brightness } = cell;
+                p.fill(hue, 1, brightness);
+                p.rect(x, y, p.cellW, p.cellH);
+            });
         }
 
         p.executeCueSet1 = (note) => {
@@ -117,6 +139,21 @@ const P5SketchWithAudio = () => {
             // p.fill(p.random(255), p.random(255), p.random(255));
             // p.noStroke();
             // p.ellipse(p.width / 2, p.height / 2, p.width / 4, p.width / 4);
+            let x = 0, y = 0, h = 0.1, b = 0.1;
+            let loop = true;
+            while (loop) {
+                const key = x + '-' + y,
+                    cell = p.cells.find(cell => cell.key === key);
+                cell.hue = h;
+                cell.brightness = b;
+                h = h + 0.05;
+                b = b + 0.05;
+                x = x +  p.cellW;
+                y = y +  p.cellH;
+                if(x > p.width|| y > p.height) {
+                    loop = false;
+                }
+            }
         }
 
         p.mousePressed = () => {
