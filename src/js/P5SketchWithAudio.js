@@ -1,4 +1,5 @@
 import React, { useRef, useEffect } from "react";
+import rough from "../../node_modules/roughjs/bundled/rough.cjs.js";
 import "./helpers/Globals";
 import "p5/lib/addons/p5.sound";
 import * as p5 from "p5";
@@ -60,10 +61,41 @@ const P5SketchWithAudio = () => {
 
         p.setup = () => {
             p.canvas = p.createCanvas(p.canvasWidth, p.canvasHeight);
-            p.background(0);
+            p.rc = rough.canvas(document.getElementById('defaultCanvas0'));
+            console.log(rough);
+            p.noLoop();
         }
 
         p.draw = () => {
+            const height = p.height / 20; 
+            let x = p.random(-height/2, 0);
+            let y = p.random(-height/2, 0);
+            while(y < p.height) {
+                while (x < p.width) {
+                    let width = p.random(height * 1.5, height * 2);
+                    // width = x + (width * 1.5) > p.width ? p.width - x : width; 
+                    const colour = p.color(
+                        p.random(0, 255),
+                        p.random(0, 255),
+                        p.random(0, 255)
+                    );
+                    console.log(colour.toString());
+                    p.rc.rectangle(
+                        x, 
+                        y, 
+                        width * 0.9, 
+                        height * 0.9,
+                        { 
+                            roughness: p.random(1, 2.5),
+                            fillStyle: 'zigzag',
+                            fill: colour.toString()
+                        }
+                    );
+                    x = x + width;
+                }
+                x = p.random(-height/2, 0);
+                y = y + height;
+            }
             if(p.audioLoaded && p.song.isPlaying()){
 
             }
