@@ -29,7 +29,7 @@ const P5SketchWithAudio = () => {
         p.loadMidi = () => {
             Midi.fromUrl(midi).then(
                 function(result) {
-                    const noteSet1 = result.tracks[5].notes; // Synth 1
+                    const noteSet1 = result.tracks[1].notes; // Sampler 2 - W-80's Synth
                     p.scheduleCueSet(noteSet1, 'executeCueSet1');
                     p.audioLoaded = true;
                     document.getElementById("loader").classList.add("loading--complete");
@@ -62,50 +62,103 @@ const P5SketchWithAudio = () => {
         p.setup = () => {
             p.canvas = p.createCanvas(p.canvasWidth, p.canvasHeight);
             p.rc = rough.canvas(document.getElementById('defaultCanvas0'));
-            console.log(rough);
             p.noLoop();
+            p.colorMode(p.HSB);
         }
 
         p.draw = () => {
-            const height = p.height / 20; 
-            let x = p.random(-height/2, 0);
-            let y = p.random(-height/2, 0);
-            while(y < p.height) {
-                while (x < p.width) {
-                    let width = p.random(height * 1.5, height * 2);
-                    // width = x + (width * 1.5) > p.width ? p.width - x : width; 
-                    const colour = p.color(
-                        p.random(0, 255),
-                        p.random(0, 255),
-                        p.random(0, 255)
-                    );
-                    console.log(colour.toString());
-                    p.rc.rectangle(
-                        x, 
-                        y, 
-                        width * 0.9, 
-                        height * 0.9,
-                        { 
-                            roughness: p.random(1, 2.5),
-                            fillStyle: 'zigzag',
-                            fill: colour.toString()
-                        }
-                    );
-                    x = x + width;
-                }
-                x = p.random(-height/2, 0);
-                y = y + height;
-            }
             if(p.audioLoaded && p.song.isPlaying()){
 
             }
         }
 
+        p.rects = [];
+
+
         p.executeCueSet1 = (note) => {
-            p.background(p.random(255), p.random(255), p.random(255));
-            p.fill(p.random(255), p.random(255), p.random(255));
-            p.noStroke();
-            p.ellipse(p.width / 2, p.height / 2, p.width / 4, p.width / 4);
+            const { duration } = note,
+                delayMultiplier = duration > 1 ? 0.8 : 0.6,
+                heightDivisor =  duration < 1 ? p.random(4, 12) : p.random([16, 24, 36]),
+                height = p.height / heightDivisor,
+                fillStyle = heightDivisor > 12 
+                    ? (Math.random() > 0.15 ? p.random(['hachure', 'cross-hatch']) : 'solid')
+                    : p.random(['zigzag', 'cross-hatch', 'sunburst', 'dashed', 'zigzag-line']),
+                colourScheme = fillStyle === 'solid' 
+                    ? 'tetradic'
+                    : p.random(['random', 'tetradic', 'rainbow']);
+            
+            p.clear();
+            p.rects = [];
+
+            let x = p.random(-height/2, 0);
+            let y = p.random(-height/2, 0);
+            let count = 0;
+            while(y < p.height) {
+                while (x < p.width) {
+                    let width = p.random(height * 1.5, height * 2),
+                        colour = '';
+                    if(colourScheme === 'random') {
+                        colour = p.color(
+                            p.random(0, 360),
+                            p.random(50, 100),
+                            p.random(50, 100)
+                        );
+                    } 
+                    else if(colourScheme === 'tetradic') {
+                        colour = p.color(
+                            count % 4 * 90,
+                            75, 
+                            75
+                        );
+                    } 
+                    else {
+                        colour = p.color(
+                            count % 6 * 60,
+                            p.random(25, 100),
+                            p.random(25, 100)
+                        );
+                    }
+                    
+                    p.rects.push(
+                        {
+                            x: x, 
+                            y: y, 
+                            width: width * 0.9, 
+                            height: height * 0.9,
+                            colour: colour.toString(),
+                            fillStyle: fillStyle
+                        }
+                        
+                    );
+                    count++;
+                    x = x + width;
+                }
+                x = p.random(-height/2, 0);
+                y = y + height;
+            }
+
+            p.rects = p.shuffle(p.rects);
+            const delay = (duration * 1000 / p.rects.length) * delayMultiplier;
+            for (let i = 0; i < p.rects.length; i++) {
+                const rect = p.rects[i],
+                    { x, y, width, height, colour, fillStyle } = rect;
+                setTimeout(
+                    function () {
+                        p.rc.rectangle(
+                            x, 
+                            y, 
+                            width, 
+                            height,
+                            { 
+                                roughness: p.random(1, 2.5),
+                                fill: colour,
+                                fillStyle: fillStyle
+                            }
+                        );
+                    },
+                    (delay * i)
+                );
+            }
         }
 
         p.hasStarted = false;
