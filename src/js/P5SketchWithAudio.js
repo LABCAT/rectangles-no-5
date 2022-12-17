@@ -64,6 +64,7 @@ const P5SketchWithAudio = () => {
             p.rc = rough.canvas(document.getElementById('defaultCanvas0'));
             p.noLoop();
             p.colorMode(p.HSB);
+            p.rectMode(p.CENTER);
         }
 
         p.draw = () => {
@@ -76,7 +77,7 @@ const P5SketchWithAudio = () => {
 
 
         p.executeCueSet1 = (note) => {
-            const { duration } = note,
+            const { duration, currentCue } = note,
                 delayMultiplier = duration > 1 ? 0.8 : 0.6,
                 heightDivisor =  duration < 1 ? p.random(4, 12) : p.random([16, 24, 36]),
                 height = p.height / heightDivisor,
@@ -90,8 +91,8 @@ const P5SketchWithAudio = () => {
             p.clear();
             p.rects = [];
 
-            let x = p.random(-height/2, 0);
-            let y = p.random(-height/2, 0);
+            let x = p.random(-height / 2, 0);
+            let y = p.random(-height / 2, 0);
             let count = 0;
             while(y < p.height) {
                 while (x < p.width) {
@@ -128,7 +129,6 @@ const P5SketchWithAudio = () => {
                             colour: colour.toString(),
                             fillStyle: fillStyle
                         }
-                        
                     );
                     count++;
                     x = x + width;
@@ -159,6 +159,37 @@ const P5SketchWithAudio = () => {
                     (delay * i)
                 );
             }
+
+            if(currentCue > 60) {
+                const overlay = p.rects.find(p.centralRect),
+                    fillColour = p.color(overlay.colour),
+                    fillHue = fillColour._getHue(),
+                    strokeHue = fillHue + 180 > 360 ? fillHue - 180 : fillHue + 180,
+                    strokeColour = p.color(strokeHue, fillColour._getSaturation(), fillColour._getBrightness()),
+                    strokeSize = (currentCue % 20) ? p.width / (22 - (currentCue % 20)) : p.width / 2;
+
+                p.strokeWeight(strokeSize);
+                p.stroke(strokeColour);
+                p.fill(fillColour);
+                
+                p.rect(
+                    p.width / 2, 
+                    p.height / 2, 
+                    p.width, 
+                    p.height,
+                );          
+            }
+        }
+
+        p.centralRect = (rect) => {
+            const midX = p.width / 2,
+                midY = p.height / 2,
+                divisor = 4;
+
+            return rect.x < midX + midX / divisor 
+                && rect.x > midX - midX / divisor
+                && rect.y < midY + midY / divisor
+                && rect.y > midY - midY / divisor; 
         }
 
         p.hasStarted = false;
